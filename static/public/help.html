@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Copilot 配置指南</title>
+    <style>
+        :root {
+            --primary-color: #0066CC;
+            --background-light: #ffffff;
+            --text-color: #1d1d1f;
+            --code-background: #f5f7fa;
+            --border-color: #d2d2d7;
+            --warning-background: #fff7ed;
+            --warning-border: #fec589;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Icons', 'Helvetica Neue', sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem;
+            background-color: var(--background-light);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 600;
+            margin-bottom: 2rem;
+            color: var(--text-color);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 3rem;
+            margin-bottom: 1rem;
+            color: var(--text-color);
+        }
+
+        .step {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            position: relative;
+        }
+
+        .step::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0.5rem;
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+        }
+
+        .step a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        pre {
+            background-color: var(--code-background);
+            border-radius: 12px;
+            padding: 1.5rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        code {
+            font-family: 'SF Mono', Monaco, Consolas, monospace;
+            background-color: var(--code-background);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .warning {
+            background-color: var(--warning-background);
+            border: 1px solid var(--warning-border);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        .warning::before {
+            content: "🚨";
+            margin-right: 0.5rem;
+        }
+
+        .note {
+            background-color: var(--code-background);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        .note::before {
+            content: "🚧";
+            margin-right: 0.5rem;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background-light: #1d1d1f;
+                --text-color: #f5f5f7;
+                --code-background: #2c2c2e;
+                --border-color: #3a3a3c;
+                --warning-background: #3a3123;
+                --warning-border: #8b5e34;
+            }
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+
+            pre {
+                padding: 1rem;
+            }
+        }
+
+        .config-wrapper {
+            position: relative;
+        }
+
+        .copy-button {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .copy-button:hover {
+            background-color: var(--hover-color);
+        }
+
+        .dynamic-domain {
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        #show-hb {
+            display: none;
+        }
+
+        #hidden-hb {
+            display: block;
+        }
+
+        .footer {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 32px;
+            font-size: 13px;
+            color: #86868b;
+        }
+
+        .footer a {
+            color: var(--primary-color);
+            text-decoration: none;
+            transition: var(--transition);
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<h1>Copilot 配置指南</h1>
+
+<h2>VSCode</h2>
+<div class="step">安装插件: <code>GitHub Copilot</code></div>
+<div class="step">修改 VSCode 的 settings.json 文件, 添加以下配置:</div>
+<div class="config-wrapper">
+        <pre id="configCode">{
+    "github-enterprise.uri": "https://my.ghe.com",
+    "github.copilot.advanced": {
+        "authProvider": "github-enterprise"
+    }
+}</pre>
+    <button id="copyBtn" class="copy-button">复制配置</button>
+</div>
+
+
+<h2>Visual Studio 2026</h2>
+<div class="step">更新 VS 2026 最新版</div>
+<div class="step">开启 GitHub Enterprise 账户支持：
+- **工具** → **环境** → **账户** → 勾选 **包含 GitHub Enterprise 服务器账户**</div>
+<div class="step">输入 https://my.ghe.com</div>
+<div class="step">完成设备码登录</div>
+
+
+<h2>Copilot CLI</h2>
+<div class="step">安装Copilot CLI</div>
+<div class="step">命令行输入 copilot 启动</div>
+<div class="step">输入 /login </div>
+<div class="step">选择2 GitHub Enterprise Cloud (*.ghe.com)</div>
+<div class="step">输入 https://my.ghe.com </div>
+<div class="step"> Sign in with your browser (recommended)  与  Sign in with a device code  随便选一个</div>
+<div class="step">完成登录</div>
+
+
+<div class="footer">
+    © 2026 Open Source Contributors
+</div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        // 获取当前域名和端口
+        const currentHost = window.location.host; // 这将获取 "domain:port" 格式
+
+        // 只要是默认本地部署的域名，就显示 HBuilderX 的安装步骤
+        if (currentHost.includes('my.ghe.com')) {
+            document.getElementById('show-hb').style.display = 'block';
+            document.getElementById('hidden-hb').style.display = 'none';
+        } else {
+            document.getElementById('show-hb').style.display = 'none';
+            document.getElementById('hidden-hb').style.display = 'block';
+        }
+
+        // 更新所有需要替换的地方
+        const domainElements = document.querySelectorAll('.dynamic-domain');
+        domainElements.forEach(element => {
+            element.textContent = currentHost;
+        });
+    });
+
+    document.getElementById('copyBtn').addEventListener('click', function () {
+        const configText = document.getElementById('configCode').textContent;
+        navigator.clipboard.writeText(configText).then(() => {
+            const originalText = this.textContent;
+            this.textContent = '已复制！';
+            setTimeout(() => {
+                this.textContent = originalText;
+            }, 2000);
+        });
+    });
+</script>
+</body>
+</html>

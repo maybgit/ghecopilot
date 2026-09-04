@@ -1,0 +1,54 @@
+package github_auth
+
+import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
+	"os"
+	"sort"
+	"strings"
+)
+
+func sha256Sign(data string) string {
+	hash := sha256.Sum256([]byte(data))
+	return hex.EncodeToString(hash[:])
+}
+
+func JsonMap2Token(data map[string]interface{}) string {
+	if len(data) == 0 {
+		return ""
+	}
+
+	keys := make([]string, 0, len(data))
+	for k := range data {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	var sb strings.Builder
+	for i, key := range keys {
+		if i > 0 {
+			sb.WriteString(";")
+		}
+		sb.WriteString(key)
+		sb.WriteString("=")
+		sb.WriteString(fmt.Sprintf("%v", data[key]))
+	}
+
+	return sb.String()
+}
+
+func JsonMap2SignToken(data map[string]interface{}) string {
+	token := JsonMap2Token(data)
+	if token == "" {
+		return ""
+	}
+
+	sign := Token2Sign(token)
+	return token + ";8kp=1:" + sign
+}
+
+func Token2Sign(token string) string {
+	sign := sha256Sign(token + fmt.Sprintf(";salt=%s", os.Getenv("JWT_SECRET")))
+	return sign
+}

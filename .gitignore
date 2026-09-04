@@ -1,0 +1,10 @@
+logs
+*.exe
+.vscode
+.env
+*.key
+*.pem
+models.json
+set-copilot-cli-env.ps1
+*.zip
+*-header.txt
