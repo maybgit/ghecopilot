@@ -1,5 +1,7 @@
 # GitHub Copilot Proxies (ghecopilot)
 
+[中文](README.md) | [English](README.en.md)
+
 一个 **GitHub Copilot 反向代理服务器**，让你使用Coiplot CLI、VS Code、Visual Studio 2026等编辑器中的 GitHub Copilot 插件时，将 AI 请求转发到你**自建的 OpenAI 兼容服务**（如 Ollama、vLLM、OneAPI 等），从而摆脱对 GitHub 官方 Copilot 服务的依赖，实现**本地化 / 私有化部署**。
 
 > 项目采用 [MIT License](LICENSE) 开源。
