@@ -15,6 +15,7 @@ import (
 	"net/url"
 	"os"
 	"path"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -148,6 +149,11 @@ func OpenAIProxy(r *gin.Engine) {
 	topP, _ := strconv.ParseFloat(os.Getenv("CHAT_TOP_P"), 64)
 	customParamsModels := os.Getenv("CHAT_CUSTOM_PARAMS_MODELS") + ","
 
+	// 代理转发到上游的本地域名及路径
+	hostsDomains := os.Getenv("HOSTS_DOMAINS")
+	var proxyHost = strings.Split(hostsDomains, ",")
+	var proxyPath = []string{"/chat/completions", "/responses"}
+
 	log.Printf("[CONFIG] CHAT_REPETITION_PENALTY=%f, CHAT_TEMPERATURE=%f, CHAT_TOP_P=%f, COPILOT_AUTO_MODEL: %s", repPenalty, temperature, topP, copilotAutoModel)
 
 	proxy := &httputil.ReverseProxy{
@@ -186,10 +192,7 @@ func OpenAIProxy(r *gin.Engine) {
 	r.Use(func(c *gin.Context) {
 		// log.Println("In Authorization: ", c.Request.Header.Get("Authorization"))
 		host := c.Request.Host
-		if host == "localhost:11434" ||
-			(host == "api.githubcopilot.com" && (c.Request.URL.Path == "/responses" || c.Request.URL.Path == "/chat/completions")) ||
-			(host == "api.my.ghe.com" && strings.HasPrefix(c.Request.URL.Path, "/chat/completions")) {
-
+		if host == "localhost:11434" || (slices.Contains(proxyHost, host) && slices.Contains(proxyPath, c.Request.URL.Path)) {
 			// 更改tools edit_file 描述description
 			if strings.HasSuffix(c.Request.URL.Path, "/chat/completions") {
 				interactionId := c.Request.Header.Get("X-Interaction-Id")
