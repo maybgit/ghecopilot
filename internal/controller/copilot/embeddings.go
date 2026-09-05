@@ -60,10 +60,16 @@ func EmbeddingModels(c *gin.Context) {
 
 	requestID := uuid.Must(uuid.NewV4()).String()
 	c.Header("x-github-request-id", requestID)
+	// 同时输出 "models" 与 "data" 两种结构：
+	//   - "models" : VS Code Copilot 的 doGetAvailableTypes 用 for..of r.models 遍历，
+	//                缺少该字段会报 "r.models is not iterable"
+	//   - "data"   : OpenAI 风格，兼容其它客户端
+	models := []gin.H{
+		{"id": modelName, "object": "model", "owned_by": "openai", "permission": []string{}, "active": true},
+	}
 	c.JSON(http.StatusOK, gin.H{
-		"data": []gin.H{
-			{"id": modelName, "object": "model", "owned_by": "openai", "permission": []string{}},
-		},
+		"models": models,
+		"data":   models,
 		"object": "list",
 	})
 }
