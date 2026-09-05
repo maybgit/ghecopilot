@@ -31,6 +31,7 @@ const modelTemplate = `{
     }
   },
   "object": "model",
+  "serviceType": "InstantApplyChat",
   "model_picker_category": "versatile",
   "supported_endpoints": [
     "/chat/completions"
@@ -136,7 +137,13 @@ func BuildModelList() ([]byte, error) {
 		return nil, err
 	}
 
-	list := []byte(`{"data":[],"object":"list"}`)
+	// 同时输出两种结构：
+	//   - "data"   : OpenAI 风格，聊天模型选择器（_fetchModels 读取 .data）使用
+	//   - "models" : CAPI 风格，instant-apply / code-mapper 拉取器
+	//                （instantApplyModels getter 读取 .models 并 .filter）使用
+	// 两者内容一致，避免客户端因缺少 .models 而报
+	// "Cannot read properties of undefined (reading 'filter')"
+	list := []byte(`{"data":[],"models":[],"object":"list"}`)
 	idx := 0
 	for _, id := range ids {
 		item, err := applyModelTemplate(id)
@@ -148,8 +155,9 @@ func BuildModelList() ([]byte, error) {
 		item, _ = sjson.SetBytes(item, "is_chat_default", id == copilotChatDefaultModel)
 		item, _ = sjson.SetBytes(item, "is_chat_fallback", id == copilotChatFallbackModel)
 
-		// 按索引追加到 data 数组（SetRawBytes 保留原始 JSON 结构）
+		// 按索引追加到 data 与 models 数组（SetRawBytes 保留原始 JSON 结构）
 		list, _ = sjson.SetRawBytes(list, fmt.Sprintf("data.%d", idx), item)
+		list, _ = sjson.SetRawBytes(list, fmt.Sprintf("models.%d", idx), item)
 		idx++
 	}
 
