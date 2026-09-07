@@ -30,6 +30,7 @@ func setupBasicRoutes(g *gin.RouterGroup) {
 	})
 	g.Any("/models", GetModelsFromJson)
 	g.Any("/models/*model-id", GetModel)
+	g.Any("/agents/sessions", GetModelsFromJson)
 	g.Any("/auto", GetModel)
 	g.Any("/_ping", GetPing)
 	g.POST("/telemetry", PostTelemetry)

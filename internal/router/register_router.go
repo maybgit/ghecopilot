@@ -106,17 +106,10 @@ func (c *modelCache) cleanup() {
 
 func ignoreLanguage(str string) string {
 	var filtered []string
-	var ignore bool
 	br := "\n"
 	lines := strings.Split(str, br)
 	for _, v := range lines {
-		if strings.HasPrefix(v, "```<language>") || strings.HasPrefix(v, "```csharp") {
-			ignore = true
-			continue
-		}
-
-		if ignore && strings.HasPrefix(v, "```") {
-			ignore = false
+		if strings.HasPrefix(v, "```") {
 			continue
 		}
 		filtered = append(filtered, v)
