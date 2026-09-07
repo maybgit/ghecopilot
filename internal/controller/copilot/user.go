@@ -144,6 +144,8 @@ func GetCopilotInternalUser(ctx *gin.Context) {
 		"assigned_date":           generateAssignedDate(),
 		"can_signup_for_limited":  false,
 		"chat_enabled":            true,
+		"is_mcp_enabled":          true,
+		"codex_agent_enabled":     true,
 		"organization_login_list": []interface{}{},
 		"organization_list":       []interface{}{},
 	})

@@ -72,7 +72,7 @@ const modelTemplate = `{
         ],
         "max_prompt_image_size": 3145728
       },
-      "max_output_tokens": 8192
+      "max_output_tokens": 65536
     },
     "object": "model_capabilities",
     "type": "chat"
