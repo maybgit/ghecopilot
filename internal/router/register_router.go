@@ -288,6 +288,9 @@ func OpenAIProxy(r *gin.Engine) {
 }
 
 func NewHTTPRouter(r *gin.Engine) {
+	// 404 请求日志：注册在最外层，覆盖 NoRoute / handler 内部 / 上游代理 三种 404 来源
+	r.Use(middleware.NotFoundLogger())
+
 	OpenAIProxy(r)
 
 	rootRouter := r.Group("/")
