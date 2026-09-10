@@ -140,6 +140,7 @@ func OpenAIProxy(r *gin.Engine) {
 	repPenalty, _ := strconv.ParseFloat(os.Getenv("CHAT_REPETITION_PENALTY"), 64)
 	temperature, _ := strconv.ParseFloat(os.Getenv("CHAT_TEMPERATURE"), 64)
 	topP, _ := strconv.ParseFloat(os.Getenv("CHAT_TOP_P"), 64)
+	chatMaxCompletionTokens, _ := strconv.ParseFloat(os.Getenv("CHAT_MAX_COMPLETION_TOKENS"), 64)
 	customParamsModels := os.Getenv("CHAT_CUSTOM_PARAMS_MODELS") + ","
 
 	// 代理转发到上游的本地域名及路径
@@ -248,6 +249,10 @@ func OpenAIProxy(r *gin.Engine) {
 
 					if topP > 0 {
 						body, _ = sjson.SetBytes(body, "top_p", topP)
+					}
+
+					if chatMaxCompletionTokens > 0 {
+						body, _ = sjson.SetBytes(body, "max_completion_tokens", chatMaxCompletionTokens)
 					}
 				}
 
