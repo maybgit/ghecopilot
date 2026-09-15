@@ -145,7 +145,7 @@ func OpenAIProxy(r *gin.Engine) {
 	// 代理转发到上游的本地域名及路径
 	hostsDomains := os.Getenv("HOSTS_DOMAINS")
 	var proxyHost = strings.Split(hostsDomains, ",")
-	var proxyPath = []string{"/chat/completions", "/responses"}
+	var proxyPath = []string{"/chat/completions", "/responses", "/embeddings"}
 
 	log.Printf("[CONFIG] CHAT_REPETITION_PENALTY=%f, CHAT_TEMPERATURE=%f, CHAT_TOP_P=%f, COPILOT_AUTO_MODEL: %s", repPenalty, temperature, topP, copilotAutoModel)
 
@@ -168,6 +168,9 @@ func OpenAIProxy(r *gin.Engine) {
 			preq.Out.URL.RawPath = ""
 			if preq.Out.URL.Path == "/chat/completions" {
 				preq.Out.URL.Path = "/v1/chat/completions"
+			}
+			if preq.Out.URL.Path == "/embeddings" {
+				preq.Out.URL.Path = "/v1/embeddings"
 			}
 		},
 		// 处理客户端断开连接时的 panic，避免 recovery 中间件打印无用日志
