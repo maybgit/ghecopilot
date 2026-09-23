@@ -4,6 +4,8 @@
 
 一个 **GitHub Copilot 反向代理服务器**，让你使用Coiplot CLI、VS Code、Visual Studio 2026等编辑器中的 GitHub Copilot 插件时，将 AI 请求转发到你**自建的 OpenAI 兼容服务**（如 Ollama、vLLM、OneAPI 等），从而摆脱对 GitHub 官方 Copilot 服务的依赖，实现**本地化 / 私有化部署**。
 
+**注意：** 目前只测试了New-API是正常的，其它openai兼容的服务比如deepseek,aliyun等多多少少存在一些问题，建议直接使用New-API，其它服务没有太多时间测试完善
+
 > 项目采用 [MIT License](LICENSE) 开源。
 
 ---
