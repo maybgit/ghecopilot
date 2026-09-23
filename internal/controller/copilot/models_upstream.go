@@ -72,7 +72,7 @@ const modelTemplate = `{
         ],
         "max_prompt_image_size": 3145728
       },
-      "max_output_tokens": 65536
+      "max_output_tokens": 128000
     },
     "object": "model_capabilities",
     "type": "chat"
@@ -122,6 +122,7 @@ func fetchUpstreamModels() ([]string, error) {
 
 // modelListCache 模型列表缓存，首次访问时构建，之后一直复用
 var modelListCache []byte
+var ModelIdMap = make(map[string]string)
 
 // BuildModelList 拉取上游模型列表并构建完整的模型 JSON 列表
 func BuildModelList() ([]byte, error) {
@@ -146,6 +147,10 @@ func BuildModelList() ([]byte, error) {
 	list := []byte(`{"data":[],"models":[],"object":"list"}`)
 	idx := 0
 	for _, id := range ids {
+		if _, has := ModelIdMap[id]; !has {
+			ModelIdMap[id] = id
+		}
+
 		item, err := applyModelTemplate(id)
 		if err != nil {
 			log.Printf("[model] 构建模型 %s 失败: %v", id, err)

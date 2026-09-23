@@ -7,13 +7,13 @@ if (!(Test-Path -Path .env)) {
 
 # Get-ChildItem logs -Directory -ErrorAction SilentlyContinue | Remove-Item -Recurse -Force
 
-Stop-Process -Name ghecopilot -Force -ErrorAction SilentlyContinue
 
-if ($env:CLIENTNAME -eq "DESKTOP-2DONPVA" -and $env:USERNAME -eq "mayb") {
+if ($env:COMPUTERNAME -eq "DESKTOP-FG53PVS" -and $env:USERNAME -eq "mayb") {
     $c = (Get-Content .env) -replace '^UPSTREAM_API_KEY=.*$', 'UPSTREAM_API_KEY='
     $c | Out-File .\.env.example -Encoding utf8
 }
 
+Stop-Process -Name ghecopilot -Force -ErrorAction SilentlyContinue
 go build -o ghecopilot.exe
 
 if ($?) {

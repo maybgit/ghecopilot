@@ -22,7 +22,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/tidwall/gjson"
 	"github.com/tidwall/sjson"
 )
@@ -140,12 +139,13 @@ func OpenAIProxy(r *gin.Engine) {
 	repPenalty, _ := strconv.ParseFloat(os.Getenv("CHAT_REPETITION_PENALTY"), 64)
 	temperature, _ := strconv.ParseFloat(os.Getenv("CHAT_TEMPERATURE"), 64)
 	topP, _ := strconv.ParseFloat(os.Getenv("CHAT_TOP_P"), 64)
-	customParamsModels := os.Getenv("CHAT_CUSTOM_PARAMS_MODELS") + ","
+	chatMaxCompletionTokens, _ := strconv.ParseFloat(os.Getenv("CHAT_MAX_COMPLETION_TOKENS"), 64)
+	customParamsModels := strings.Split(os.Getenv("CHAT_CUSTOM_PARAMS_MODELS"), ",")
 
 	// 代理转发到上游的本地域名及路径
 	hostsDomains := os.Getenv("HOSTS_DOMAINS")
 	var proxyHost = strings.Split(hostsDomains, ",")
-	var proxyPath = []string{"/chat/completions", "/responses"}
+	var proxyPath = []string{"/chat/completions", "/responses", "/embeddings"}
 
 	log.Printf("[CONFIG] CHAT_REPETITION_PENALTY=%f, CHAT_TEMPERATURE=%f, CHAT_TOP_P=%f, COPILOT_AUTO_MODEL: %s", repPenalty, temperature, topP, copilotAutoModel)
 
@@ -168,6 +168,9 @@ func OpenAIProxy(r *gin.Engine) {
 			preq.Out.URL.RawPath = ""
 			if preq.Out.URL.Path == "/chat/completions" {
 				preq.Out.URL.Path = "/v1/chat/completions"
+			}
+			if preq.Out.URL.Path == "/embeddings" {
+				preq.Out.URL.Path = "/v1/embeddings"
 			}
 		},
 		// 处理客户端断开连接时的 panic，避免 recovery 中间件打印无用日志
@@ -218,9 +221,7 @@ func OpenAIProxy(r *gin.Engine) {
 
 				// copilot cli 不选择任何模型，default 情况下会传可能在models不存在的模型
 				// 比如claude-sonnet-4等，这里判断下，不存在设置为环境变量COPILOT_CHAT_DEFAULT_MODEL设置的模型，不然提交到上游报503错误，提示模型不存在
-				jsonData, _ := copilot.BuildModelList()
-				item := gjson.GetBytes(jsonData, `data.#(id=="`+model+`")`)
-				if !item.Exists() {
+				if _, has := copilot.ModelIdMap[model]; !has {
 					log.Printf("X-Interaction-Id: %s, %s does not exist, set model: %s", interactionId, model, copilotChatDefaultModel)
 					model = copilotChatDefaultModel
 					body, _ = sjson.SetBytes(body, "model", copilotChatDefaultModel)
@@ -234,10 +235,7 @@ func OpenAIProxy(r *gin.Engine) {
 				}
 
 				// 模型是CHAT_CUSTOM_PARAMS_MODELS变量指定的模型时才设置相关的参数
-				if strings.Contains(customParamsModels, model+",") {
-					// body, _ = sjson.SetBytes(body, "reasoning_effort", "xhigh")
-					// body, _ = sjson.SetBytes(body, "enable_thinking", true)
-
+				if slices.Contains(customParamsModels, model) {
 					if repPenalty > 0 {
 						body, _ = sjson.SetBytes(body, "repetition_penalty", repPenalty)
 					}
@@ -249,18 +247,22 @@ func OpenAIProxy(r *gin.Engine) {
 					if topP > 0 {
 						body, _ = sjson.SetBytes(body, "top_p", topP)
 					}
+
+					if chatMaxCompletionTokens > 0 {
+						body, _ = sjson.SetBytes(body, "max_tokens", chatMaxCompletionTokens)
+						body, _ = sjson.SetBytes(body, "max_completion_tokens", chatMaxCompletionTokens)
+					}
 				}
 
 				c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
 				c.Request.ContentLength = int64(len(body))
 				c.Request.Header.Del("Transfer-Encoding")
 
-				logDir := fmt.Sprintf("logs/%s", interactionId)
+				logDir := fmt.Sprintf("logs/%s", time.Now().Format("20060102"))
 				os.MkdirAll(logDir, 0755)
 
-				uid := uuid.NewString()
 				s14 := time.Now().Format("20060102150405")
-				reqJsonFileName := fmt.Sprintf("%s/%s-%s.json", logDir, s14, uid)
+				reqJsonFileName := fmt.Sprintf("%s/%s-%s.json", logDir, s14, interactionId)
 				go func() {
 					os.WriteFile(reqJsonFileName, body, 0644)
 				}()
@@ -288,6 +290,9 @@ func OpenAIProxy(r *gin.Engine) {
 }
 
 func NewHTTPRouter(r *gin.Engine) {
+	// 404 请求日志：注册在最外层，覆盖 NoRoute / handler 内部 / 上游代理 三种 404 来源
+	r.Use(middleware.NotFoundLogger())
+
 	OpenAIProxy(r)
 
 	rootRouter := r.Group("/")

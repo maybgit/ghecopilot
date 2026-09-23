@@ -4,6 +4,8 @@
 
 A **GitHub Copilot reverse proxy server** that lets you use the GitHub Copilot plugin in Copilot CLI, VS Code, Visual Studio 2026, and other editors by forwarding AI requests to **your own OpenAI-compatible service** (such as Ollama, vLLM, OneAPI, etc.), freeing you from a dependency on GitHub's official Copilot service and enabling **local / private deployment**.
 
+** Note ** : Currently, only the New-API has been tested and found to be normal. Other OpenAI-compatible services such as deepseek and aliyun have more or less some issues. It is recommended to directly use the New-API. There is not much time to test and improve other services
+
 > The project is open-sourced under the [MIT License](LICENSE).
 
 ---
