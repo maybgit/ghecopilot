@@ -195,6 +195,18 @@ func OpenAIProxy(r *gin.Engine) {
 
 				body, _ := io.ReadAll(c.Request.Body)
 
+				// 移除 messages 中 content 为空的条目（从后往前删，避免索引错位）
+				// 修复 deepseek 请求报错的问题 （The `reasoning_content` in the thinking mode must be passed back to the API. ）
+				msgs := gjson.GetBytes(body, "messages")
+				if msgs.IsArray() {
+					arr := msgs.Array()
+					for i := len(arr) - 1; i >= 0; i-- {
+						if c := arr[i].Get("content"); c.Exists() && c.Str == "" {
+							body, _ = sjson.DeleteBytes(body, fmt.Sprintf("messages.%d", i))
+						}
+					}
+				}
+
 				// 移除message数组0中带```的符号
 				content0 := gjson.GetBytes(body, `messages.0.content`)
 				if content0.Exists() {
