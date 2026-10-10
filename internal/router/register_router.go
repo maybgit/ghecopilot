@@ -117,6 +117,46 @@ func ignoreLanguage(str string) string {
 	return str
 }
 
+// removeOrphanToolMessages 移除 role=tool 但 tool_call_id 在前面的 assistant 消息
+// tool_calls 中找不到对应的消息，修复上游报错：
+// Messages with role 'tool' must be a response to a preceding message with 'tool_calls'
+func removeOrphanToolMessages(body []byte, interactionId string) []byte {
+	msgs := gjson.GetBytes(body, "messages")
+	if !msgs.IsArray() {
+		return body
+	}
+	arr := msgs.Array()
+
+	// 顺序遍历，收集已出现过的 assistant tool_calls id
+	seen := make(map[string]struct{})
+	toDelete := make([]int, 0)
+	for i, m := range arr {
+		switch m.Get("role").Str {
+		case "assistant":
+			for _, tc := range m.Get("tool_calls").Array() {
+				if id := tc.Get("id").Str; id != "" {
+					seen[id] = struct{}{}
+				}
+			}
+		case "tool":
+			id := m.Get("tool_call_id").Str
+			if id == "" {
+				continue
+			}
+			if _, ok := seen[id]; !ok {
+				log.Printf("X-Interaction-Id: %s, remove orphan tool message: index=%d, tool_call_id=%s", interactionId, i, id)
+				toDelete = append(toDelete, i)
+			}
+		}
+	}
+
+	// 从后往前删，避免索引错位
+	for i := len(toDelete) - 1; i >= 0; i-- {
+		body, _ = sjson.DeleteBytes(body, fmt.Sprintf("messages.%d", toDelete[i]))
+	}
+	return body
+}
+
 // mapModels 以 interactionId 为键记录模型，30 分钟无访问自动过期
 var mapModels = newModelCache(30*time.Minute, 100000)
 
@@ -206,6 +246,9 @@ func OpenAIProxy(r *gin.Engine) {
 						}
 					}
 				}
+
+				// 移除 tool_call_id 无对应 assistant tool_calls 的 tool 消息
+				body = removeOrphanToolMessages(body, interactionId)
 
 				// 移除message数组0中带```的符号
 				content0 := gjson.GetBytes(body, `messages.0.content`)
